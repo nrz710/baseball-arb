@@ -975,6 +975,10 @@ footer details[open] summary{margin-bottom:10px;}
           <label><input type="checkbox" id="tfShowPY2" checked> PY-2</label>
           <label><input type="checkbox" id="tfShowCAR" checked> Career</label>
         </div>
+        <div class="dropdown" id="statColDropdown" style="position:relative;">
+          <button type="button" class="dropdown-toggle" id="statColToggle">Show/hide columns <span class="chev">&#9662;</span></button>
+          <div class="dropdown-panel" id="statColPanel"></div>
+        </div>
       </div>
       <p class="sub" id="detailSub">Click one or more rows in Top comparables above to line them up against your profile, one timeframe per table (Platform Year, PY-1, PY-2, Career) &mdash; every stat from the spreadsheet for that timeframe, scrollable left to right. Click a selected row again to remove it.</p>
       <div id="detailBody"></div>
@@ -1518,6 +1522,7 @@ function renderFinderSetup(){
 
   setupCsvUpload();
   setupInClassMode();
+  setupStatColumnDropdown();
   setupFilingRange();
   setupCollapseAndPdf();
 
@@ -2780,6 +2785,59 @@ const TF_SECTIONS = [
   {prefix:'py2', blockLabel:'PY-2', toggleId:'tfShowPY2', title:'Platform Year minus 2 (PY-2)'},
   {prefix:'car', blockLabel:'CAR',  toggleId:'tfShowCAR', title:'Career (CAR)'},
 ];
+// Per-stat column visibility for the head-to-head tables: a set of hidden
+// base stat keys (the part of an EXPLORER_COLS key after its py_/py1_/py2_/
+// car_ prefix), shared across all four timeframe tables since the same stat
+// name means the same thing in each -- hiding "HR" hides it everywhere.
+const HIDDEN_STAT_KEYS = new Set();
+function getUniqueStatColumns(){
+  const seen = new Map();
+  EXPLORER_COLS.forEach(c=>{
+    const m = c.key.match(/^(py1|py2|py|car)_(.+)$/);
+    if (!m) return;
+    const base = m[2];
+    if (!seen.has(base)){
+      const label = c.label.replace(/^(PY-2|PY-1|PY|CAR)\s+/,'');
+      seen.set(base, label);
+    }
+  });
+  return Array.from(seen.entries()).map(([key,label])=>({key,label}));
+}
+function setupStatColumnDropdown(){
+  const panel = document.getElementById('statColPanel');
+  const cols = getUniqueStatColumns();
+  panel.innerHTML = `<label class="pos-select-all"><span>Select all</span><input type="checkbox" id="statColSelectAll" checked></label>`
+    + cols.map(c=>`<label><span>${c.label}</span><input type="checkbox" class="stat-col-check" value="${c.key}" checked></label>`).join('');
+
+  const toggle = document.getElementById('statColToggle');
+  const checks = () => Array.from(panel.querySelectorAll('.stat-col-check'));
+  const selectAllBox = document.getElementById('statColSelectAll');
+
+  toggle.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    panel.classList.toggle('open');
+  });
+  document.addEventListener('click', (e)=>{
+    if (!document.getElementById('statColDropdown').contains(e.target)) panel.classList.remove('open');
+  });
+
+  selectAllBox.addEventListener('change', ()=>{
+    checks().forEach(cb=>{ cb.checked = selectAllBox.checked; });
+    HIDDEN_STAT_KEYS.clear();
+    if (!selectAllBox.checked) checks().forEach(cb=>HIDDEN_STAT_KEYS.add(cb.value));
+    renderDetailComparison();
+  });
+  panel.addEventListener('change', (e)=>{
+    if (!e.target.classList.contains('stat-col-check')) return;
+    if (e.target.checked) HIDDEN_STAT_KEYS.delete(e.target.value);
+    else HIDDEN_STAT_KEYS.add(e.target.value);
+    const allChecked = checks().every(cb=>cb.checked);
+    const noneChecked = checks().every(cb=>!cb.checked);
+    selectAllBox.checked = allChecked;
+    selectAllBox.indeterminate = !allChecked && !noneChecked;
+    renderDetailComparison();
+  });
+}
 // Stat-by-stat comparison highlighting for the time-frame tables: for each
 // numeric stat, work out whether the comp is better, worse, or close versus
 // the "NEW" profile, using standard baseball direction-of-good-ness per stat.
@@ -2834,7 +2892,7 @@ function renderDetailComparison(){
   const sectionsHtml = TF_SECTIONS.map(sec=>{
     const visible = document.getElementById(sec.toggleId).checked;
     if (!visible) return '';
-    const timeCols = EXPLORER_COLS.filter(c=>c.key.startsWith(sec.prefix+'_'));
+    const timeCols = EXPLORER_COLS.filter(c=>c.key.startsWith(sec.prefix+'_') && !HIDDEN_STAT_KEYS.has(c.key.slice(sec.prefix.length+1)));
     const stripPrefix = new RegExp('^'+sec.blockLabel+' ');
     const headHtml = '<tr><th>Yr</th><th>Player</th>' + timeCols.map(c=>`<th>${c.label.replace(stripPrefix,'')}</th>`).join('') + '</tr>';
 
