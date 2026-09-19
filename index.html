@@ -541,6 +541,8 @@ table.class-predict-table tbody tr:hover{background:rgba(0,0,0,0.03);}
 .fr-block th.fr-mm{background:var(--green);}
 .fr-block th.fr-mp{background:var(--navy);}
 .fr-block th.fr-cin{background:var(--red);}
+.fr-block th.fr-spread{background:#111;color:#fff;}
+.fr-block td.fr-mp-val{color:#2A6FDB;font-weight:600;}
 .fr-block td{padding:3px 10px;text-align:right;border-bottom:1px solid var(--hairline);cursor:pointer;white-space:nowrap;}
 .fr-block tbody tr:hover td{background:rgba(0,0,0,0.06);}
 .fr-block tbody tr.fr-selected td{background:rgba(184,134,46,0.28) !important;font-weight:700;}
@@ -928,7 +930,7 @@ footer details[open] summary{margin-bottom:10px;}
         </details>
         <details class="card" open>
           <summary><h3 style="display:inline;">Top comparables</h3></summary>
-          <p class="sub">Ranked by composite similarity score. Click any row below to add it to the time-frame breakdown &mdash; click as many as you want. Full methodology in the notes at the bottom of the page.</p>
+          <p class="sub">Ranked by composite similarity score.</p>
           <div class="controls" style="margin-bottom:10px;">
             <label>Limit comp pool to contract years</label>
             <input type="number" id="fPoolFrom" value="2003" style="width:80px;"> &ndash;
@@ -2313,13 +2315,14 @@ function generateFilingGrid(){
   const blocksHtml = playerVals.map(mm=>{
     const rows = clubVals.map(cin=>{
       const mp = (mm+cin)/2;
+      const spread = mm-cin;
       return `<tr class="fr-row" data-mm="${mm}" data-cin="${cin}" data-mp="${mp}">
-        <td>${fmtFull(mm)}</td><td>${fmtFull(mp)}</td><td>${fmtFull(cin)}</td>
+        <td>${fmtFull(mm)}</td><td class="fr-mp-val">${fmtFull(mp)}</td><td>${fmtFull(cin)}</td><td>${fmtFull(spread)}</td>
       </tr>`;
     }).join('');
     return `<div class="fr-block">
       <table>
-        <thead><tr><th class="fr-mm">Player</th><th class="fr-mp">Mid</th><th class="fr-cin">Club</th></tr></thead>
+        <thead><tr><th class="fr-mm">Player</th><th class="fr-mp">Midpoint</th><th class="fr-cin">Club</th><th class="fr-spread">Spread</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
