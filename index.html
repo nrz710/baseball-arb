@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,13 +95,14 @@ h1.title{
   margin:0;
   letter-spacing:-0.01em;
 }
-h1.title em{font-style:italic;font-weight:500;color:var(--red);}
+h1.title em{font-style:italic;font-weight:500;color:#8A5238;}
 .docket-meta{
   text-align:right;
   font-size:13px;
   color:var(--ink-soft);
   font-family:'Fraunces',serif;
   font-style:italic;
+  white-space:nowrap;
 }
 .stat-strip{
   display:grid;
@@ -592,10 +592,10 @@ footer details[open] summary{margin-bottom:10px;}
 <div class="wrap">
 
   <div class="docket">
-    <p class="docket-num">EXHIBIT MARKET-1 &nbsp;·&nbsp; FIRST-TIME ELIGIBLE (1TE) HITTERS &nbsp;·&nbsp; CONTRACT YEARS 2003&ndash;2026</p>
+    <p class="docket-num">ARBITRATION CONTRACTS USING PREDECTIVE SIMILARITIES &nbsp;·&nbsp; CONTRACTS SINCE 2003</p>
     <div class="docket-row">
-      <h1 class="title">Salary Arbitration<br><em>Market Dashboard</em></h1>
-      <div class="docket-meta">Compiled from in-system settlement &amp; hearing<br>records, first-time eligible position players.</div>
+      <h1 class="title">Market Dashboard<br><em>1TE Hitters</em></h1>
+      <div class="docket-meta">Compiled from in-system settlement &amp; hearing records</div>
     </div>
     <div class="stat-strip" id="statStrip"></div>
   </div>
@@ -716,7 +716,6 @@ footer details[open] summary{margin-bottom:10px;}
       <button type="button" class="btn-secondary" id="expandAllBtn">Expand all sections</button>
       <button type="button" class="btn-primary" id="downloadPdfBtn" style="width:auto;margin-top:0;padding:8px 14px;font-size:12.5px;font-weight:600;">Download PDF of expanded sections</button>
     </div>
-    <p class="mini finder-help-text" style="margin:8px 0 14px;">Each section below can be collapsed independently (click its title). "Download PDF" opens your browser's print dialog with only the currently expanded sections included &mdash; choose "Save as PDF" as the destination.</p>
     <div class="finder-grid">
       <div>
       <details class="card" open>
@@ -791,7 +790,6 @@ footer details[open] summary{margin-bottom:10px;}
             <div class="field"><label>PY fWAR</label><input type="number" step="0.1" id="fFWAR" value="2.8"></div>
             <div class="field"></div>
           </div>
-          <p class="mini" style="margin:2px 0 6px;">Defensive value (skip / leave at 0 for DH-only profiles)</p>
           <div class="field-row">
             <div class="field"><label>PY DRS</label><input type="number" id="fDRS" value="0"></div>
             <div class="field"><label>PY UZR</label><input type="number" step="0.1" id="fUZR" value="0"></div>
@@ -808,14 +806,12 @@ footer details[open] summary{margin-bottom:10px;}
             <div class="field"><label>PY-1 Plate Apps</label><input type="number" id="fPA1" value="480"></div>
             <div class="field"><label>PY-1 wRC+</label><input type="number" id="fWRC1" value="100"></div>
           </div>
-          <p class="mini" id="qualPatternLabel" style="margin:0 0 4px;">&nbsp;</p>
 
           <p class="section-label">Platform year minus 2 (PY-2)</p>
           <div class="field-row">
             <div class="field"><label>PY-2 Plate Apps</label><input type="number" id="fPA2" value="350"></div>
             <div class="field"><label>PY-2 wRC+</label><input type="number" id="fWRC2" value="90"></div>
           </div>
-          <p class="mini" style="margin:0 0 4px;">Qualifying season = 502+ PA. Leave PY-1/PY-2 wRC+ at 100 (league average) if that year had no meaningful MLB playing time &mdash; it will be treated as no signal, not a real season.</p>
 
           <p class="section-label">Career (CAR)</p>
           <div class="field-row">
@@ -2003,11 +1999,9 @@ function runClassAnalysis(){
 }
 
 function updateQualPatternLabel(){
-  const pa2 = +document.getElementById('fPA2').value || 0;
-  const pa1 = +document.getElementById('fPA1').value || 0;
-  const pa0 = +document.getElementById('fPA').value || 0;
-  const pat = [pa2,pa1,pa0].map(v=>v>=502?'Q':'-').join('\u2013');
-  document.getElementById('qualPatternLabel').textContent = `Pattern: ${pat}  (PY-2\u2013PY-1\u2013PY)`;
+  // (qualifying-season pattern is still computed and used in scoring; this
+  // function used to also display it as "Pattern: Q-Q-Q" but that label has
+  // been removed from the UI)
 }
 function getSelectedPositions(){
   return Array.from(document.querySelectorAll('#fPosPanel input[type=checkbox]:checked:not(#fPosSelectAll)')).map(el=>el.value);
@@ -2257,9 +2251,8 @@ function renderFilingPossibilities(){
   const clubCount = designated.filter(x=>x.side==='club').length;
   const playerCount = designated.filter(x=>x.side==='player').length;
   const eitherCount = designated.filter(x=>x.side==='either').length;
-  const manualNote = (FILING_MANUAL.club!==null || FILING_MANUAL.player!==null) ? ' Numbers marked with the \u25B2/\u25BC arrows have been manually adjusted in $25,000 steps from their designated-comp starting point.' : '';
   const poolLabel = (yearPoolFrom===2003 && yearPoolTo===2026) ? 'all years (2003\u201326)' : `${yearPoolFrom}\u2013${yearPoolTo}`;
-  noteEl.textContent = `Based on your designations: ${clubCount} club, ${playerCount} player, ${eitherCount} either-side (either-side comps count toward both). Club's number starts at the lowest-valued case in its pool; player's at the highest-valued in its pool (${adjusted?'inflation-adjusted':'as settled'}); midpoint recalculates live. Use the \u25B2/\u25BC arrows to move either number by $25,000; any case from contract years ${poolLabel} within $100,000 of a number appears in light blue below its side, whether or not it's part of your current Top Comparables list.${manualNote}`;
+  noteEl.textContent = `Based on your designations: ${clubCount} club, ${playerCount} player, ${eitherCount} either-side (either-side comps count toward both). Club's number starts at the lowest-valued case in its pool; player's at the highest-valued in its pool (${adjusted?'inflation-adjusted':'as settled'}); midpoint recalculates live. Use the \u25B2/\u25BC arrows to move either number by $25,000; any case from contract years ${poolLabel} within $100,000 of a number appears in light blue below its side, whether or not it's part of your current Top Comparables list.`;
 
   // auto-fill the filing-range inputs from these designation-based numbers,
   // as a starting point, the first time each side's inputs are empty
@@ -3080,4 +3073,3 @@ renderedTabs.add('overview');
 </script>
 </body>
 </html>
-
